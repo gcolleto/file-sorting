@@ -44,22 +44,19 @@ def get_exif_data(image_path):
 # Function to extract GPS coordinates from EXIF data
 def get_gps_info(image_path):
     exif_data = get_exif_data(image_path)
-    print(exif_data.keys())
     if 'GPSInfo' in exif_data:
         gps_info = exif_data['GPSInfo']
-        try:
-            if all(k in gps_info for k in ['GPSLatitude', 'GPSLatitudeRef', 'GPSLongitude', 'GPSLongitudeRef']):
-                lat = [float(x[0]) / float(x[1]) if x[1] != 0 else 0 for x in gps_info['GPSLatitude']]
-                lat = lat[0] + lat[1] / 60 + lat[2] / 3600
-                if gps_info['GPSLatitudeRef'] == 'S':
-                    lat = -lat
-                lon = [float(x[0]) / float(x[1]) if x[1] != 0 else 0 for x in gps_info['GPSLongitude']]
-                lon = lon[0] + lon[1] / 60 + lon[2] / 3600
-                if gps_info['GPSLongitudeRef'] == 'W':
-                    lon = -lon
-                return (lat, lon)
-        except:
-            return None
+        if all(k in gps_info for k in ['GPSLatitude', 'GPSLatitudeRef', 'GPSLongitude', 'GPSLongitudeRef']):
+            lat = [x for x in gps_info['GPSLatitude']]  #[float(x[0]) / float(x[1]) if x[1] != 0 else 0 for x in gps_info['GPSLatitude']]
+            lat = lat[0] + lat[1] / 60 + lat[2] / 3600
+            if gps_info['GPSLatitudeRef'] == 'S':
+                lat = -lat
+            #lon = [float(x[0]) / float(x[1]) if x[1] != 0 else 0 for x in gps_info['GPSLongitude']]
+            lon = [x for x in gps_info['GPSLongitude']]  #[float(x[0]) / float(x[1]) if x[1] != 0 else 0 for x in gps_info['GPSLatitude']]
+            lon = lon[0] + lon[1] / 60 + lon[2] / 3600
+            if gps_info['GPSLongitudeRef'] == 'W':
+                lon = -lon
+            return (lat, lon)
     return None
 
 # Function to get city name from GPS coordinates
@@ -74,6 +71,7 @@ def get_city_from_coords(lat, lon):
     except (GeocoderTimedOut, GeocoderUnavailable) as e:
         print(f"Geocoding failed for ({lat}, {lon}): {e}")
         return f'Unknown_{lat}_{lon}'
+
 
 # Main script
 def organize_images(folder_path, dry_run=False):
