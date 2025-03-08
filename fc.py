@@ -9,6 +9,17 @@ from PIL.ExifTags import TAGS, GPSTAGS
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderUnavailable
 
+def format_size(size):
+    if size < 1024:
+        return f"{size} bytes"
+    elif size < 1024 * 1024:
+        return f"{size / 1024:.2f} KB"
+    elif size < 1024 * 1024 * 1024:
+        return f"{size / (1024 * 1024):.2f} MB"
+    else:
+        return f"{size / (1024 * 1024 * 1024):.2f} GB"
+
+
 # Function to calculate distance between two GPS coordinates (Haversine formula)
 def haversine(lat1, lon1, lat2, lon2):
     R = 6371  # Earth's radius in kilometers
@@ -109,11 +120,20 @@ def organize_images(folder_path, dry_run=False):
     # Identify duplicates
     files_to_remove = identify_duplicates(folder_path, image_files)
     
+    # Compute total freed memory
+    total_memory_freed = 0
+    for file in files_to_remove:
+        file_path = os.path.join(folder_path, file)
+        try:
+            total_memory_freed += os.path.getsize(file_path)
+        except OSError:
+            print(f"Cannot access {file_path}")
+
     if dry_run:
         if files_to_remove:
             print("Would remove the following duplicate files:")
             for file in files_to_remove:
-                print(f"  {file}")
+                print(f"  {file} {format_size(os.path.getsize(os.path.join(folder_path, file)))}")
         files_to_process = [f for f in image_files if f not in files_to_remove]
     else:
         for file in files_to_remove:
@@ -210,6 +230,12 @@ def organize_images(folder_path, dry_run=False):
                     dst = os.path.join(trip_folder, pic['filename'])
                     shutil.move(src, dst)
                     print(f"Moved {pic['filename']} to {trip_folder}")
+
+    if total_memory_freed > 0:
+        if dry_run:
+            print(f"Would free {format_size(total_memory_freed)}")
+        else:
+            print(f"Freed {format_size(total_memory_freed)}")
 
 # Command-line argument parsing
 if __name__ == "__main__":
